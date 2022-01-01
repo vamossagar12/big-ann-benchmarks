@@ -115,6 +115,17 @@ random-xs:
           args:
             - [ 0.2, 0.8, 1.0 ]
           query-args: [ ]
+    scann-t1:
+      docker-tag: billion-scale-benchmark-scann
+      module: benchmark.algorithms.scann_t1
+      constructor: Scann
+      base-args: ["@metric"]
+      run-groups:
+        base:
+          args: |
+              [{"dist": "squared_l2"}]
+          query-args: |
+              [{}]
 deep-10M:
     faiss-t1:
       docker-tag: billion-scale-benchmark-faissconda

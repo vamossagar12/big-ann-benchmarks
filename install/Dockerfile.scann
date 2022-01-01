@@ -1,0 +1,6 @@
+FROM billion-scale-benchmark
+
+RUN apt update && apt install -y wget
+
+RUN python3 -m pip install scann
+RUN python3 -c 'import scann'
