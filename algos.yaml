@@ -123,7 +123,7 @@ random-xs:
       run-groups:
         base:
           args: |
-              [{"dist": "squared_l2"}]
+              [{"dist": "squared_l2", "searcher_type": "brute_force"}]
           query-args: |
               [{}]
 deep-10M:

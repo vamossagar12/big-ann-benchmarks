@@ -10,7 +10,12 @@ class Scann(BaseANN):
         if index_params.get("dist") is None:
             print("Error: missing parameter dist")
             return
+        self.searcher_type = index_params.get("searcher_type")
         self.dist = index_params.get("dist")
+        if self.dist == "dot_product":
+            self.spherical = True
+        else:
+            self.spherical = False
         self._metric = metric
         self.dims_per_block = 2 # Recommended value for dimensions per block
         if index_params.get("n_leaves") is not None:
@@ -23,8 +28,7 @@ class Scann(BaseANN):
 
     def fit(self, dataset):
         ds = DATASETS[dataset]()
-        if self.dist == "dot_product":
-            self.spherical = True
+        if self.spherical:
             ds[np.linalg.norm(dataset, axis=1) == 0] = 1.0 / np.sqrt(ds.shape[1])
             ds /= np.linalg.norm(dataset, axis=1)[:, np.newaxis]
         else:
@@ -32,18 +36,15 @@ class Scann(BaseANN):
         if len(ds) < 20000:
             self.searcher = scann.scann_ops_pybind.builder(ds, 10, self.dist)\
                 .score_brute_force()
-            self.searcher_type = "brute_force"
         elif len(ds) < 100000:
             self.searcher = scann.scann_ops_pybind.builder(ds, 10, self.dist)\
                 .score_ah(self.dims_per_block, anisotropic_quantization_threshold=self.avq_threshold)\
                 .build()
-            self.searcher_type = "score_ah_rescore"
         else:
             self.searcher = scann.scann_ops_pybind.builder(ds, 10, self.dist)\
                 .tree(self.n_leaves, 1, training_sample_size=len(ds), spherical=self.spherical, quantize_centroids=True)\
                 .score_ah(self.dims_per_block, anisotropic_quantization_threshold=self.avq_threshold)\
                 .build()
-            self.searcher_type = "partition_score_ah_rescore"
 
     def query(self, X, k):
         self.res = self.searcher.search_batched_parallel(X, k, self.reorder, self.leaves_to_search)
@@ -77,7 +78,7 @@ class Scann(BaseANN):
         return index_dir
 
     def load_index(self, dataset):
-        index_dir = self.create_index_dir(dataset)
+        index_dir = self.create_index_dir(DATASETS[dataset]())
         if not (os.path.exists(index_dir)):
             return False
         self.searcher = scann.scann_ops_pybind.load_searcher(index_dir)
