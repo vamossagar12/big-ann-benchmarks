@@ -54,7 +54,7 @@ class Scann(BaseANN):
         self.res = self.searcher.search_batched_parallel(X, k, self.reorder, self.leaves_to_search)
 
     def index_name(self):
-        index_name = f"scann.{self.searcher_type}_spherical{self.spherical}"
+        index_name = f"scann.{self.searcher_type}_spherical_{self.spherical}"
         if self.n_leaves is not None:
             index_name += f"_n_leaves{self.n_leaves}"
         if self.avq_threshold is not None:
@@ -69,7 +69,7 @@ class Scann(BaseANN):
         return [self.create_index_dir(DATASETS[dataset]()), self.index_name(), self.get_searcher_assets()]
 
     def create_index_dir(self, dataset):
-        index_dir = os.path.join(os.getcwd(), "data", "indices")
+        index_dir = os.path.join("data", "indices")
         os.makedirs(index_dir, mode=0o777, exist_ok=True)
         index_dir = os.path.join(index_dir, "T1")
         os.makedirs(index_dir, mode=0o777, exist_ok=True)
