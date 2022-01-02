@@ -20,8 +20,12 @@ class Scann(BaseANN):
         self.dims_per_block = 2 # Recommended value for dimensions per block
         if index_params.get("n_leaves") is not None:
             self.n_leaves = index_params.get("n_leaves")
+        else:
+            self.n_leaves = None
         if index_params.get("avq_threshold") is not None:
             self.avq_threshold = index_params.get("avq_threshold")
+        else:
+            self.avq_threshold = None
 
     def track(self):
         return "T1"
@@ -143,8 +147,12 @@ class Scann(BaseANN):
         self._query_args = query_args
         if query_args.get("reorder") is not None:
             self.reorder = query_args.get("reorder")
+        else:
+            self.reorder = None
         if query_args.get("leaves_to_search") is not None:
             self.leaves_to_search = query_args.get("leaves_to_search")
+        else:
+            self.leaves_to_search = None
 
     def get_results(self):
         ids, dists = self.res
