@@ -32,21 +32,24 @@ class Scann(BaseANN):
 
     def fit(self, dataset):
         ds = DATASETS[dataset]()
+        nb = ds.nb
+        X = ds.get_dataset() # assumes it fits into memory
         if self.spherical:
             ds[np.linalg.norm(dataset, axis=1) == 0] = 1.0 / np.sqrt(ds.shape[1])
             ds /= np.linalg.norm(dataset, axis=1)[:, np.newaxis]
         else:
             self.spherical = False
-        if len(ds) < 20000:
-            self.searcher = scann.scann_ops_pybind.builder(ds, 10, self.dist)\
-                .score_brute_force()
-        elif len(ds) < 100000:
-            self.searcher = scann.scann_ops_pybind.builder(ds, 10, self.dist)\
+        if ds.nb < 20000:
+            self.searcher = scann.scann_ops_pybind.builder(X, 10, self.dist)\
+                .score_brute_force()\
+                .build()
+        elif ds.nb < 100000:
+            self.searcher = scann.scann_ops_pybind.builder(X, 10, self.dist)\
                 .score_ah(self.dims_per_block, anisotropic_quantization_threshold=self.avq_threshold)\
                 .build()
         else:
-            self.searcher = scann.scann_ops_pybind.builder(ds, 10, self.dist)\
-                .tree(self.n_leaves, 1, training_sample_size=len(ds), spherical=self.spherical, quantize_centroids=True)\
+            self.searcher = scann.scann_ops_pybind.builder(dX, 10, self.dist)\
+                .tree(self.n_leaves, 1, training_sample_size=nb, spherical=self.spherical, quantize_centroids=True)\
                 .score_ah(self.dims_per_block, anisotropic_quantization_threshold=self.avq_threshold)\
                 .build()
 
@@ -64,12 +67,13 @@ class Scann(BaseANN):
     def get_searcher_assets(self):
         searcher_assets = ["dataset.npy", "datapoint_to_token.npy", "hashed_dataset.npy", "int8_dataset.npy", "int8_multipliers.npy", "dp_norms.npy"]
         return searcher_assets
-
+    '''
     def index_files_to_store(self, dataset):
         return [self.create_index_dir(DATASETS[dataset]()), self.index_name(), self.get_searcher_assets()]
+    '''
 
     def create_index_dir(self, dataset):
-        index_dir = os.path.join("data", "indices")
+        index_dir = os.path.join("/data", "indices")
         os.makedirs(index_dir, mode=0o777, exist_ok=True)
         index_dir = os.path.join(index_dir, "T1")
         os.makedirs(index_dir, mode=0o777, exist_ok=True)
@@ -82,10 +86,14 @@ class Scann(BaseANN):
         return index_dir
 
     def load_index(self, dataset):
+        return False
+        '''
         index_dir = self.create_index_dir(DATASETS[dataset]())
+        print(f"Index dir {index_dir} exists: {os.path.exists(index_dir)}")
         if not (os.path.exists(index_dir)):
             return False
         self.searcher = scann.scann_ops_pybind.load_searcher(index_dir)
+        '''
 
     def range_query(self, X, radius):
         k = 100
